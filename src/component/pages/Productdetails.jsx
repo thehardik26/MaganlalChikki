@@ -1,92 +1,150 @@
-import { useParams } from "react-router-dom";
+import React, { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
+import { FaShoppingCart, FaHeart, FaChevronLeft, FaStar } from "react-icons/fa";
+import { useDispatch } from "react-redux";
 import axios from "axios";
+import { addToCart } from "../redux/Store/slice/cartslice";
+import { addFav } from "../redux/Store/slice/favslice";
 import PageHeader from "../global/PageHeader";
 
 const getSingleProduct = async (id) => {
     const response = await axios.get(`https://appy.trycatchtech.com/v3/maganlalchikki/product_details?product_id=${id}`);
-    return response.data[0]; 
+    return response.data[0];
 };
 
-export default function ProductDetails() {
+const ProductDetails = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const [quantity, setQuantity] = useState(1);
 
     const { data: product, isLoading } = useQuery({
         queryKey: ["product", id],
         queryFn: () => getSingleProduct(id),
+        enabled: !!id,
     });
 
     if (isLoading) {
         return (
-            <div className="h-screen flex items-center justify-center">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-amber-500 border-t-transparent"></div>
+            <div className="h-screen flex items-center justify-center bg-white">
+                <div className="h-12 w-12 animate-spin rounded-full border-4 border-amber-500 border-t-transparent"></div>
             </div>
         );
     }
 
+    const handleAddToCart = () => {
+        dispatch(addToCart({
+            id: product.id,
+            title: product.product_name,
+            price: product.product_price,
+            image: product.product_image,
+            quantity: quantity
+        }));
+    };
+
     return (
-        <div className="bg-white min-h-screen font-sans">
+        <div className="bg-gray-50 min-h-screen font-sans">
             <PageHeader title={product?.product_name || "Product Details"} />
-            
-            <div className="max-w-6xl mx-auto px-6 py-16">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
-                    
-                    <div className="bg-amber-50/30 rounded-2xl p-8 border border-amber-100/50">
+
+            <div className="max-w-7xl mx-auto px-6 py-12">
+                <button 
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-2 text-gray-500 hover:text-amber-600 transition-colors mb-8 font-bold uppercase text-[10px] tracking-widest"
+                >
+                    <FaChevronLeft size={10} /> Back to Shop
+                </button>
+
+                <div className="bg-white rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row gap-12 p-8 md:p-16">
+                    <motion.div 
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="w-full md:w-1/2 flex items-center justify-center bg-amber-50/20 rounded-[2.5rem] p-10 border border-amber-100/50"
+                    >
                         <img 
-                            src={product?.product_images} 
-                            alt={product?.product_title} 
-                            className="w-full h-auto object-cover rounded-lg shadow-sm"
+                            src={product?.product_image} 
+                            alt={product?.product_name} 
+                            className="w-full h-auto object-cover rounded-2xl shadow-2xl transform hover:scale-105 transition-transform duration-500"
                         />
-                    </div>
+                    </motion.div>
 
-                    <div className="flex flex-col">
+                    <motion.div 
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="w-full md:w-1/2 flex flex-col justify-center"
+                    >
                         <div className="mb-6">
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-600 bg-amber-50 px-3 py-1 rounded-full">
-                                Authentic Collection
-                            </span>
-                            <h1 className="text-4xl font-serif text-gray-900 mt-4 leading-tight">
-                                {product?.product_title}
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="bg-amber-100 text-amber-700 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+                                    Authentic Maganlal
+                                </span>
+                                <div className="flex items-center gap-1 text-amber-500 text-xs ml-2">
+                                    <FaStar /><FaStar /><FaStar /><FaStar /><FaStar />
+                                    <span className="text-gray-400 ml-1 font-bold">(4.9)</span>
+                                </div>
+                            </div>
+                            <h1 className="text-4xl md:text-5xl font-serif italic text-gray-900 leading-tight mb-4 uppercase tracking-tighter">
+                                {product?.product_name}
                             </h1>
-                        </div>
-                        
-                        <div className="flex items-center gap-4 mb-8">
-                            <span className="text-3xl font-bold text-amber-600 font-sans">
+                            <p className="text-amber-600 text-3xl font-black tracking-tight">
                                 ₹{product?.product_price}
-                            </span>
-                            <span className="text-sm text-gray-400 line-through decoration-amber-200">
-                                ₹{parseInt(product?.product_price) + 50}
-                            </span>
-                        </div>
-
-                        <div className="prose prose-sm text-gray-600 leading-relaxed border-y border-gray-100 py-8 mb-8">
-                            <p>
-                                {product?.description || "Experience the traditional taste of Lonavala with our premium Maganlal Chikki. Handcrafted using high-quality ingredients and a time-honored recipe for that perfect crunch."}
                             </p>
                         </div>
 
-                        <div className="flex gap-4 mb-10">
-                            <div className="flex items-center border border-gray-200 rounded-lg bg-gray-50 overflow-hidden">
-                                <button className="px-4 py-2 hover:bg-amber-100 transition-colors text-gray-500">-</button>
-                                <input 
-                                    type="number" 
-                                    defaultValue="1" 
-                                    className="w-12 bg-transparent text-center text-sm font-bold focus:outline-none"
-                                />
-                                <button className="px-4 py-2 hover:bg-amber-100 transition-colors text-gray-500">+</button>
+                        <div className="text-gray-500 text-sm leading-relaxed mb-10 border-t border-gray-100 pt-8">
+                            <p className="mb-4">
+                                {product?.description || "Indulge in the legendary crunch of Maganlal Chikki, a heritage snack from Lonavala. Crafted with the finest jaggery and premium nuts, this traditional delicacy offers a perfect blend of health and sweetness."}
+                            </p>
+                            <ul className="grid grid-cols-2 gap-y-2 text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                                <li className="flex items-center gap-2"><span className="h-1 w-1 bg-amber-500 rounded-full"></span> 100% Vegetarian</li>
+                                <li className="flex items-center gap-2"><span className="h-1 w-1 bg-amber-500 rounded-full"></span> No Preservatives</li>
+                                <li className="flex items-center gap-2"><span className="h-1 w-1 bg-amber-500 rounded-full"></span> Freshly Packed</li>
+                                <li className="flex items-center gap-2"><span className="h-1 w-1 bg-amber-500 rounded-full"></span> Lonavala Famous</li>
+                            </ul>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-4 mb-10">
+                            <div className="flex items-center border-2 border-gray-100 rounded-2xl p-1 bg-gray-50">
+                                <button 
+                                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                                    className="px-5 py-2 hover:bg-white rounded-xl transition-all text-gray-500 font-bold"
+                                >-</button>
+                                <span className="w-12 text-center font-black text-gray-800">{quantity}</span>
+                                <button 
+                                    onClick={() => setQuantity(q => q + 1)}
+                                    className="px-5 py-2 hover:bg-white rounded-xl transition-all text-gray-500 font-bold"
+                                >+</button>
                             </div>
-                            <button className="flex-1 bg-amber-500 text-white font-bold py-4 rounded-lg uppercase text-[11px] tracking-widest hover:bg-amber-600 hover:shadow-lg transition-all duration-300 transform active:scale-[0.98]">
-                                Add to Cart
+
+                            <button 
+                                onClick={handleAddToCart}
+                                className="flex-1 bg-amber-500 text-white font-black py-5 rounded-2xl uppercase text-[11px] tracking-[0.2em] hover:bg-gray-900 transition-all duration-500 flex items-center justify-center gap-3 shadow-xl shadow-amber-200"
+                            >
+                                <FaShoppingCart size={14} /> Add to Shopping Bag
+                            </button>
+
+                            <button 
+                                onClick={() => dispatch(addFav({ id: product.id, name: product.product_name, price: product.product_price, images: product.product_image }))}
+                                className="p-5 border-2 border-gray-100 rounded-2xl text-gray-400 hover:text-red-500 hover:border-red-100 transition-all hover:bg-red-50"
+                            >
+                                <FaHeart size={18} />
                             </button>
                         </div>
 
-                        <div className="space-y-3 text-[11px] uppercase tracking-widest text-gray-400 border-t border-gray-50 pt-8">
-                            <p>Category: <span className="text-amber-600 font-bold ml-2">Chikki</span></p>
-                            <p>Shipping: <span className="text-gray-600 font-medium ml-2">Available across India</span></p>
-                            <p>Tags: <span className="text-gray-600 font-medium ml-2">Traditional, Sweet, Healthy</span></p>
+                        <div className="space-y-2 pt-8 border-t border-gray-50">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                Category: <span className="text-amber-600 ml-2">Chikki & Sweets</span>
+                            </p>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                SKU: <span className="text-gray-800 ml-2">MC-{id}</span>
+                            </p>
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             </div>
         </div>
     );
-}
+};
+
+export default ProductDetails;
