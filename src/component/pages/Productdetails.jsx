@@ -1,150 +1,162 @@
-import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import React from "react";
+import { Heart, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
-import { FaShoppingCart, FaHeart, FaChevronLeft, FaStar } from "react-icons/fa";
-import { useDispatch } from "react-redux";
-import axios from "axios";
-import { addToCart } from "../redux/Store/slice/cartslice";
+import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { addFav } from "../redux/Store/slice/favslice";
-import PageHeader from "../global/PageHeader";
+import toast from "react-hot-toast";
 
-const getSingleProduct = async (id) => {
-    const response = await axios.get(`https://appy.trycatchtech.com/v3/maganlalchikki/product_details?product_id=${id}`);
-    return response.data[0];
+const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i) => ({
+        opacity: 1,
+        y: 0,
+        transition: {
+            delay: i * 0.04,
+            type: "tween",
+            duration: 0.25,
+            ease: "easeOut",
+        },
+    }),
 };
 
-const ProductDetails = () => {
-    const { id } = useParams();
-    const navigate = useNavigate();
+const ProductDetail = ({ name, data, categoryId }) => {
+    const favList = useSelector((store) => store.fav.list);
     const dispatch = useDispatch();
-    const [quantity, setQuantity] = useState(1);
 
-    const { data: product, isLoading } = useQuery({
-        queryKey: ["product", id],
-        queryFn: () => getSingleProduct(id),
-        enabled: !!id,
-    });
+    const addtoFav = (e, product, isFav) => {
+        e.preventDefault();
+        e.stopPropagation();
 
-    if (isLoading) {
-        return (
-            <div className="h-screen flex items-center justify-center bg-white">
-                <div className="h-12 w-12 animate-spin rounded-full border-4 border-amber-500 border-t-transparent"></div>
-            </div>
-        );
-    }
+        if (!isFav) {
+            const item = {
+                id: product.id,
+                name: product.title,
+                images: product.images?.[0],
+            };
 
-    const handleAddToCart = () => {
-        dispatch(addToCart({
-            id: product.id,
-            title: product.product_name,
-            price: product.product_price,
-            image: product.product_image,
-            quantity: quantity
-        }));
+            dispatch(addFav(item));
+            toast.success("Added to favourites ✨", {
+                icon: '🧡',
+                style: { border: '1px solid #d97706', color: '#92400e' }
+            });
+        } else {
+            toast.error("Already in favourites 🧡");
+        }
     };
 
     return (
-        <div className="bg-gray-50 min-h-screen font-sans">
-            <PageHeader title={product?.product_name || "Product Details"} />
+        <div className="text-gray-800  dark:text-gray-100 transition-colors duration-300">
+            <div className="w-full mx-auto py-16 px-4">
+                
+                {/* Section Header */}
+                <div className="relative mb-14">
+                    {/* Amber Divider */}
+                    <div className="w-full h-0.5 bg-amber-500 rounded"></div>
 
-            <div className="max-w-7xl mx-auto px-6 py-12">
-                <button 
-                    onClick={() => navigate(-1)}
-                    className="flex items-center gap-2 text-gray-500 hover:text-amber-600 transition-colors mb-8 font-bold uppercase text-[10px] tracking-widest"
-                >
-                    <FaChevronLeft size={10} /> Back to Shop
-                </button>
+                    <div className="
+                        absolute left-0  
+                        flex items-center gap-2
+                        bg-amber-500 dark:bg-amber-600
+                        text-white
+                        px-4 py-1.5
+                        rounded-b-md
+                        shadow-md
+                    ">
+                        <Sparkles className="w-4 h-4 text-white" />
+                        <span className="text-sm md:text-base font-bold uppercase tracking-wider">
+                            {name}
+                        </span>
+                    </div>
+                </div>
 
-                <div className="bg-white rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row gap-12 p-8 md:p-16">
-                    <motion.div 
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="w-full md:w-1/2 flex items-center justify-center bg-amber-50/20 rounded-[2.5rem] p-10 border border-amber-100/50"
-                    >
-                        <img 
-                            src={product?.product_image} 
-                            alt={product?.product_name} 
-                            className="w-full h-auto object-cover rounded-2xl shadow-2xl transform hover:scale-105 transition-transform duration-500"
-                        />
-                    </motion.div>
+                {/* Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    {data?.map((product, i) => {
+                        const isFav = favList.some((item) => item.id === product.id);
 
-                    <motion.div 
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="w-full md:w-1/2 flex flex-col justify-center"
-                    >
-                        <div className="mb-6">
-                            <div className="flex items-center gap-2 mb-4">
-                                <span className="bg-amber-100 text-amber-700 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
-                                    Authentic Maganlal
-                                </span>
-                                <div className="flex items-center gap-1 text-amber-500 text-xs ml-2">
-                                    <FaStar /><FaStar /><FaStar /><FaStar /><FaStar />
-                                    <span className="text-gray-400 ml-1 font-bold">(4.9)</span>
-                                </div>
+                        return (
+                            <div key={product.id}>
+                                <Link to={`/product/${categoryId}/${product.id}`}>
+                                    <motion.div
+                                        custom={i}
+                                        variants={cardVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                        whileHover={{ y: -6, scale: 0.98 }}
+                                        transition={{
+                                            type: "tween",
+                                            duration: 0.12,
+                                            ease: "easeOut",
+                                        }}
+                                        className="
+                                            group w-full cursor-pointer
+                                            bg-white dark:bg-[#1e293b]
+                                            border border-gray-100 dark:border-gray-800
+                                            shadow-sm dark:shadow-black/30
+                                            rounded-2xl
+                                            hover:shadow-xl hover:border-amber-200 dark:hover:border-amber-900/50
+                                            transition duration-200
+                                        "
+                                    >
+                                        <div className="relative h-48 rounded-t-2xl overflow-hidden">
+                                            
+                                            {/* Heart Button */}
+                                            <motion.div
+                                                onClick={(e) => addtoFav(e, product, isFav)}
+                                                whileHover={{ scale: 1.15 }}
+                                                whileTap={{ scale: 0.9 }}
+                                                transition={{ duration: 0.12 }}
+                                                className="absolute top-3 right-3 z-10 bg-white/90 dark:bg-black/60 p-2 rounded-full shadow-sm"
+                                            >
+                                                <Heart
+                                                    className={`w-5 h-5 transition-colors ${isFav
+                                                        ? "fill-amber-500 text-amber-500"
+                                                        : "text-amber-600 hover:text-amber-500"
+                                                        }`}
+                                                />
+                                            </motion.div>
+
+                                            <motion.img
+                                                src={product.images?.[0]}
+                                                alt={product.title}
+                                                className="w-full h-full object-cover"
+                                                whileHover={{ scale: 1.05 }}
+                                                transition={{ duration: 0.18, ease: "easeOut" }}
+                                            />
+
+                                            {/* Warm Amber Gradient Overlay */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+
+                                            <div className="absolute bottom-3 left-3 text-amber-400 font-black text-lg">
+                                                ₹{product.price}
+                                            </div>
+                                        </div>
+
+                                        <div className="p-4 space-y-1">
+                                            <h3 className="font-bold text-gray-900 dark:text-gray-100 truncate group-hover:text-amber-600 transition-colors duration-150">
+                                                {product.title}
+                                            </h3>
+
+                                            <p className="text-gray-500 dark:text-gray-400 text-xs line-clamp-2 leading-relaxed">
+                                                {product.small_description}
+                                            </p>
+                                            
+                                            <div className="pt-2">
+                                                <span className="text-[10px] font-black uppercase tracking-tighter text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    View Details +
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                </Link>
                             </div>
-                            <h1 className="text-4xl md:text-5xl font-serif italic text-gray-900 leading-tight mb-4 uppercase tracking-tighter">
-                                {product?.product_name}
-                            </h1>
-                            <p className="text-amber-600 text-3xl font-black tracking-tight">
-                                ₹{product?.product_price}
-                            </p>
-                        </div>
-
-                        <div className="text-gray-500 text-sm leading-relaxed mb-10 border-t border-gray-100 pt-8">
-                            <p className="mb-4">
-                                {product?.description || "Indulge in the legendary crunch of Maganlal Chikki, a heritage snack from Lonavala. Crafted with the finest jaggery and premium nuts, this traditional delicacy offers a perfect blend of health and sweetness."}
-                            </p>
-                            <ul className="grid grid-cols-2 gap-y-2 text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                                <li className="flex items-center gap-2"><span className="h-1 w-1 bg-amber-500 rounded-full"></span> 100% Vegetarian</li>
-                                <li className="flex items-center gap-2"><span className="h-1 w-1 bg-amber-500 rounded-full"></span> No Preservatives</li>
-                                <li className="flex items-center gap-2"><span className="h-1 w-1 bg-amber-500 rounded-full"></span> Freshly Packed</li>
-                                <li className="flex items-center gap-2"><span className="h-1 w-1 bg-amber-500 rounded-full"></span> Lonavala Famous</li>
-                            </ul>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row gap-4 mb-10">
-                            <div className="flex items-center border-2 border-gray-100 rounded-2xl p-1 bg-gray-50">
-                                <button 
-                                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                                    className="px-5 py-2 hover:bg-white rounded-xl transition-all text-gray-500 font-bold"
-                                >-</button>
-                                <span className="w-12 text-center font-black text-gray-800">{quantity}</span>
-                                <button 
-                                    onClick={() => setQuantity(q => q + 1)}
-                                    className="px-5 py-2 hover:bg-white rounded-xl transition-all text-gray-500 font-bold"
-                                >+</button>
-                            </div>
-
-                            <button 
-                                onClick={handleAddToCart}
-                                className="flex-1 bg-amber-500 text-white font-black py-5 rounded-2xl uppercase text-[11px] tracking-[0.2em] hover:bg-gray-900 transition-all duration-500 flex items-center justify-center gap-3 shadow-xl shadow-amber-200"
-                            >
-                                <FaShoppingCart size={14} /> Add to Shopping Bag
-                            </button>
-
-                            <button 
-                                onClick={() => dispatch(addFav({ id: product.id, name: product.product_name, price: product.product_price, images: product.product_image }))}
-                                className="p-5 border-2 border-gray-100 rounded-2xl text-gray-400 hover:text-red-500 hover:border-red-100 transition-all hover:bg-red-50"
-                            >
-                                <FaHeart size={18} />
-                            </button>
-                        </div>
-
-                        <div className="space-y-2 pt-8 border-t border-gray-50">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                Category: <span className="text-amber-600 ml-2">Chikki & Sweets</span>
-                            </p>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                SKU: <span className="text-gray-800 ml-2">MC-{id}</span>
-                            </p>
-                        </div>
-                    </motion.div>
+                        );
+                    })}
                 </div>
             </div>
         </div>
     );
 };
 
-export default ProductDetails;
+export default ProductDetail;

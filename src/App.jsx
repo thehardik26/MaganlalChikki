@@ -7,7 +7,8 @@ import Shop from "./component/pages/Shop"
 import PageNotFound from "./component/pages/PageNotFound"
 import Cart from "./component/global/cart"
 import Fav from "./component/global/fav"
-import ProductDetails from "./component/pages/Productdetails"
+import ProductDetail from "./component/pages/Productdetails"
+
 
 function App() {
   
@@ -22,7 +23,7 @@ function App() {
       <Route path="/Shop" element={<Shop/>}/>
       <Route path="/cart" element={<Cart/>}/>
       <Route path="/fav" element={<Fav/>}/>
-      <Route path="/product/:id" element={<ProductDetails/>}/>
+      <Route path="/product/:id" element={<ProductDetail />} />
       <Route path="*" element={<PageNotFound/>}/>
       </Route>
     </Routes>
