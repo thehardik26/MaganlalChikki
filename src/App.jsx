@@ -23,7 +23,7 @@ function App() {
       <Route path="/Shop" element={<Shop/>}/>
       <Route path="/cart" element={<Cart/>}/>
       <Route path="/fav" element={<Fav/>}/>
-      <Route path="/product/:id" element={<ProductDetail />} />
+      <Route path="product/:catid/:productid" element={<ProductDetail />} />
       <Route path="*" element={<PageNotFound/>}/>
       </Route>
     </Routes>

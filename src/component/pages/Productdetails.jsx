@@ -1,119 +1,228 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../redux/Store/slice/cartslice.js";
-import { FaArrowLeft, FaShoppingCart, FaPlus, FaMinus } from "react-icons/fa";
+import { 
+    FaArrowLeft, FaShoppingCart, FaPlus, FaMinus, 
+    FaStar, FaShieldAlt, FaTruck, FaLeaf, FaShareAlt 
+} from "react-icons/fa";
 import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
+import { motion, AnimatePresence } from "framer-motion";
+import RelatedProducts from "./RelatedProducts.jsx";
 
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = "https://appy.trycatchtech.com";
 
 export default function ProductDetail() {
-    const { id } = useParams();
+    const { catid, productid } = useParams();
     const navigate = useNavigate();
     const dispatch = useDispatch();
-
-    const [product, setProduct] = useState(null);
     const [quantity, setQuantity] = useState(1);
-    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState("description");
 
     useEffect(() => {
-        const fetchProduct = async () => {
-            try {
-                const res = await axios.get(`${BASE_URL}/api/products/${id}`);
-                setProduct(res.data);
-            } catch (err) {
-                console.error("Error fetching product", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchProduct();
-    }, [id]);
+        window.scrollTo(0, 0);
+    }, [productid]);
 
-    const handleAddToCart = () => {
-        dispatch(addToCart({ ...product, quantity }));
-        // Optional: navigate to cart or show a toast
-        alert("Added to cart!");
+    const getProducts = async (catid) => {
+        const res = await axios.get(
+            `${BASE_URL}/v3/maganlalchikki/product_list?category_id=${catid}`
+        );
+        return res.data || [];
     };
 
-    if (!product && !loading) {
+    const { data: products = [], isLoading } = useQuery({
+        queryKey: ["products", catid],
+        queryFn: () => getProducts(catid),
+        enabled: !!catid,
+    });
+
+    const product = products.find((p) => String(p.id) === String(productid));
+
+    if (isLoading) {
         return (
-            <div className="h-screen flex flex-col items-center justify-center bg-gray-50">
-                <span className="text-8xl mb-4">🕵️‍♂️</span>
-                <h2 className="text-xl font-black uppercase text-gray-400">Product Not Found</h2>
-                <p className="text-gray-400 text-sm mb-6">The item you are looking for doesn't exist or has been moved.</p>
-                <button
-                    onClick={() => navigate("/shop")}
-                    className="bg-amber-500 text-white px-8 py-3 rounded-full font-black uppercase text-[10px] tracking-widest shadow-lg shadow-amber-200"
-                >
+            <div className="flex h-screen items-center justify-center bg-white">
+                <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                    className="h-12 w-12 rounded-full border-4 border-amber-500 border-t-transparent"
+                />
+            </div>
+        );
+    }
+
+    if (!product) {
+        return (
+            <div className="h-screen flex flex-col items-center justify-center bg-gray-50 px-4 text-center">
+                <h2 className="text-3xl font-serif italic text-gray-800 mb-4">Product escaped our kitchen!</h2>
+                <button onClick={() => navigate("/shop")} className="text-amber-600 font-black uppercase text-xs tracking-widest border-b-2 border-amber-600 pb-1">
                     Back to Shop
                 </button>
             </div>
         );
     }
 
-    let images = product.product_images || product.images || product.image || [];
-    if (typeof images === "string") images = [images];
-    const imageUrl = images[0]?.startsWith("http") ? images[0] : images[0] ? `${BASE_URL}${images[0]}` : "https://via.placeholder.com/500";
+    const images = Array.isArray(product.product_images || product.images || product.image) 
+        ? (product.product_images || product.images || product.image) 
+        : [product.product_images || product.product_images || product.image];
+
+    const imageUrl = images[0]?.startsWith("http") ? images[0] : images[0] ? BASE_URL + images[0] : "https://via.placeholder.com/600";
 
     return (
-        <div className="max-w-7xl mx-auto px-4 py-12 font-sans bg-gray-50 min-h-screen">
-            {/* Back Button */}
-            <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-400 hover:text-amber-500 mb-8 transition-colors">
-                <FaArrowLeft size={10} /> <span className="text-[10px] font-black uppercase tracking-widest">Back to Shop</span>
-            </button>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
-                {/* Product Image */}
-                <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-gray-100">
-                    <img src={imageUrl} alt={product.title} className="w-full h-auto object-cover rounded-3xl" />
-                </div>
-
-                {/* Product Info */}
-                <div className="space-y-8">
-                    <div>
-                        <h1 className="text-5xl font-black uppercase text-gray-800 tracking-tighter leading-none mb-4">
-                            {product.display_name || product.title}
-                        </h1>
-                        <p className="text-amber-600 font-black text-3xl">₹{product.price}</p>
-                    </div>
-
-                    <div className="text-gray-500 leading-relaxed font-medium">
-                        {product.description || "No description available for this delicious treat."}
-                    </div>
-
-                    <div className="flex items-center gap-6">
-                        {/* Quantity Selector */}
-                        <div className="flex items-center gap-6 bg-white px-6 py-3 rounded-full shadow-sm border border-gray-100">
-                            <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="text-gray-400 hover:text-red-500 transition-colors">
-                                <FaMinus size={12} />
-                            </button>
-                            <span className="font-black text-lg w-4 text-center">{quantity}</span>
-                            <button onClick={() => setQuantity(quantity + 1)} className="text-gray-400 hover:text-emerald-500 transition-colors">
-                                <FaPlus size={12} />
-                            </button>
-                        </div>
-
-                        {/* Add to Cart Button */}
-                        <button
-                            onClick={handleAddToCart}
-                            className="flex-1 bg-amber-500 text-white py-4 rounded-full font-black uppercase tracking-widest text-[12px] shadow-lg shadow-amber-200 hover:bg-amber-600 transition-all flex items-center justify-center gap-3"
-                        >
-                            <FaShoppingCart /> Add to Cart
+        <div className="min-h-screen bg-[#fafaf9] selection:bg-amber-100 selection:text-amber-900">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                <nav className="mb-8 flex items-center justify-between">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="group inline-flex items-center gap-2 font-bold uppercase text-[11px] tracking-[0.2em] text-gray-500 hover:text-amber-600 transition-all"
+                    >
+                        <FaArrowLeft className="group-hover:-translate-x-1 transition-transform" /> Back
+                    </button>
+                    <div className="flex gap-4">
+                        <button className="p-3 bg-white rounded-full border border-gray-100 shadow-sm text-gray-400 hover:text-amber-600 transition-all">
+                            <FaShareAlt size={14} />
                         </button>
                     </div>
+                </nav>
 
-                    {/* Features/Badges */}
-                    <div className="grid grid-cols-2 gap-4 pt-8">
-                        <div className="bg-emerald-50 p-4 rounded-2xl flex items-center gap-3">
-                            <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                            <span className="text-[10px] font-black uppercase text-emerald-700">100% Organic</span>
+                <div className="flex flex-col lg:flex-row gap-12 xl:gap-20">
+                    <div className="w-full lg:w-[55%] lg:sticky lg:top-24 h-fit">
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="relative aspect-square bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 flex items-center justify-center p-6 sm:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.05)]"
+                        >
+                            <div className="absolute top-6 left-6 bg-amber-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest z-10 shadow-lg">
+                                Bestseller
+                            </div>
+                            <img 
+                                src={imageUrl} 
+                                alt={product.product_name} 
+                                className="w-full h-full object-contain hover:scale-105 transition-transform duration-700 ease-out" 
+                            />
+                        </motion.div>
+                    </div>
+
+                    <div className="w-full lg:w-[45%] flex flex-col">
+                        <header className="space-y-4 mb-8">
+                            <div className="flex items-center gap-3">
+                                <div className="flex text-amber-400 text-xs">
+                                    {[...Array(5)].map((_, i) => <FaStar key={i} />)}
+                                </div>
+                                <span className="h-1 w-1 bg-gray-300 rounded-full" />
+                                <span className="text-gray-400 text-[11px] font-black uppercase tracking-widest">
+                                    500+ Happy Customers
+                                </span>
+                            </div>
+
+                            <h1 className="text-4xl md:text-5xl xl:text-6xl font-serif text-gray-900 leading-[1.1]">
+                                {product.product_name || product.title}
+                            </h1>
+
+                            <div className="flex items-center gap-6 pt-2">
+                                <span className="text-4xl font-black text-amber-600">
+                                    ₹{product.product_price || product.price}
+                                </span>
+                                <div className="flex flex-col">
+                                    <span className="text-sm text-gray-400 line-through decoration-amber-500/30 font-medium">
+                                        ₹{Number(product.product_price || product.price) + 150}
+                                    </span>
+                                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter">Save 15%</span>
+                                </div>
+                            </div>
+                        </header>
+
+                        <div className="flex flex-wrap gap-3 mb-10">
+                            <span className="px-4 py-2 bg-emerald-50 text-emerald-700 text-[11px] font-bold rounded-xl flex items-center gap-2">
+                                <FaLeaf /> 100% Vegetarian
+                            </span>
+                            <span className="px-4 py-2 bg-amber-50 text-amber-700 text-[11px] font-bold rounded-xl flex items-center gap-2">
+                                <FaStar /> Traditional Recipe
+                            </span>
                         </div>
-                        <div className="bg-blue-50 p-4 rounded-2xl flex items-center gap-3">
-                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                            <span className="text-[10px] font-black uppercase text-blue-700">Freshly Made</span>
+
+                        <div className="mb-10 border-b border-gray-100 flex gap-8">
+                            {["description", "details"].map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`pb-4 text-xs font-black uppercase tracking-widest relative transition-all ${activeTab === tab ? "text-gray-900" : "text-gray-300 hover:text-gray-500"}`}
+                                >
+                                    {tab}
+                                    {activeTab === tab && <motion.div layoutId="tabLine" className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500" />}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="mb-10 min-h-[80px]">
+                            <AnimatePresence mode="wait">
+                                <motion.p 
+                                    key={activeTab}
+                                    initial={{ opacity: 0, x: 10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    className="text-gray-500 leading-relaxed text-sm md:text-base"
+                                >
+                                    {activeTab === "description" 
+                                        ? (product.description || "A Lonavala specialty, Maganlal Chikki is made with premium jaggery and roasted peanuts for a crunch that melts in your mouth.")
+                                        : "Storage: Store in a cool, dry place. Shelf life: 4 months from packaging. Ingredients: Peanuts, Jaggery, Sugar, Ghee."
+                                    }
+                                </motion.p>
+                            </AnimatePresence>
+                        </div>
+
+                        <div className="space-y-6 mt-auto">
+                            <div className="flex flex-col sm:flex-row items-center gap-4">
+                                <div className="flex items-center bg-white border border-gray-200 rounded-2xl p-1 shadow-sm w-full sm:w-auto">
+                                    <button 
+                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                        className="w-12 h-12 flex items-center justify-center text-gray-400 hover:text-amber-600 transition-colors"
+                                    >
+                                        <FaMinus size={10} />
+                                    </button>
+                                    <span className="w-10 text-center font-black text-gray-900">{quantity}</span>
+                                    <button 
+                                        onClick={() => setQuantity(quantity + 1)}
+                                        className="w-12 h-12 flex items-center justify-center text-gray-400 hover:text-amber-600 transition-colors"
+                                    >
+                                        <FaPlus size={10} />
+                                    </button>
+                                </div>
+
+                                <button 
+                                    onClick={() => dispatch(addToCart({ ...product, quantity }))}
+                                    className="flex-1 w-full bg-gray-900 text-white font-bold py-4 px-8 rounded-2xl flex items-center justify-center gap-4 hover:bg-amber-600 transition-all duration-500 group shadow-lg active:scale-95"
+                                >
+                                    <FaShoppingCart className="group-hover:rotate-12 transition-transform" /> ADD TO BASKET
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 pt-6">
+                                <div className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-100">
+                                    <FaTruck className="text-amber-500" />
+                                    <div className="flex flex-col">
+                                        <span className="text-[11px] font-black text-gray-900 uppercase">Express</span>
+                                        <span className="text-[10px] text-gray-400">2-3 Day Delivery</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-100">
+                                    <FaShieldAlt className="text-amber-500" />
+                                    <div className="flex flex-col">
+                                        <span className="text-[11px] font-black text-gray-900 uppercase">Secure</span>
+                                        <span className="text-[10px] text-gray-400">100% Safe Payments</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                </div>
+
+                <div className="mt-32">
+                    <RelatedProducts 
+                        products={products} 
+                        currentId={productid} 
+                        catId={catid} 
+                    />
                 </div>
             </div>
         </div>

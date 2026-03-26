@@ -1,12 +1,20 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueries } from "@tanstack/react-query";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaShoppingCart, FaEye, FaSearch, FaFilter, FaRedo, FaHeart } from "react-icons/fa";
+import {
+    FaShoppingCart,
+    FaEye,
+    FaFilter,
+    FaRedo,
+    FaHeart,
+    FaChevronRight
+} from "react-icons/fa";
 import { useDispatch } from "react-redux";
 import getProducts, { getCategory } from "../utils/getProducts";
 import { addToCart } from "../redux/Store/slice/cartslice";
 import { addFav } from "../redux/Store/slice/favslice";
+import PageHeader from "../global/PageHeader";
 
 const BASE_URL = "http://localhost:5000";
 
@@ -16,6 +24,7 @@ const Shop = () => {
     const { search } = useLocation();
 
     const urlSearchTerm = new URLSearchParams(search).get("search") || "";
+
     const [searchTerm, setSearchTerm] = useState(urlSearchTerm);
     const [selectedCatId, setSelectedCatId] = useState(null);
     const [priceRange, setPriceRange] = useState(2000);
@@ -26,7 +35,7 @@ const Shop = () => {
     }, [urlSearchTerm]);
 
     const { data: categories = [], isLoading: catLoading } = useQuery({
-        queryKey: ["caty"],
+        queryKey: ["categories"],
         queryFn: getCategory,
     });
 
@@ -36,11 +45,12 @@ const Shop = () => {
                 queryKey: ["products", cat.id],
                 queryFn: async () => {
                     const res = await getProducts(cat.id);
+                    if (!res) return [];
                     return res.map((item) => ({
                         ...item,
                         id: item.id || item._id,
-                        display_name: item.product_title || item.product_name || item.title || "No Name",
-                        display_price: parseFloat(item.product_price || item.price || 0),
+                        display_name: item.product_title || item.product_name || item.title || "",
+                        display_price: Number(item.product_price || item.price || 0),
                         category_id: cat.id,
                     }));
                 },
@@ -57,19 +67,20 @@ const Shop = () => {
     const loading = catLoading || productsQuery.isFetching;
 
     const filteredProducts = useMemo(() => {
-        let result = allProducts.filter((product) => {
-            const matchesSearch = product.display_name.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesPrice = product.display_price <= priceRange;
-            const matchesCategory = selectedCatId ? String(product.category_id) === String(selectedCatId) : true;
-            return matchesSearch && matchesPrice && matchesCategory;
-        });
-
-        const sorted = [...result];
-        if (sortMethod === "lowToHigh") sorted.sort((a, b) => a.display_price - b.display_price);
-        if (sortMethod === "highToLow") sorted.sort((a, b) => b.display_price - a.display_price);
-        if (sortMethod === "alphabetical") sorted.sort((a, b) => a.display_name.localeCompare(b.display_name));
-
-        return sorted;
+        return allProducts
+            .filter((product) => {
+                const name = product.display_name || "";
+                const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesPrice = Number(product.display_price) <= priceRange;
+                const matchesCategory = selectedCatId ? String(product.category_id) === String(selectedCatId) : true;
+                return matchesSearch && matchesPrice && matchesCategory;
+            })
+            .sort((a, b) => {
+                if (sortMethod === "lowToHigh") return a.display_price - b.display_price;
+                if (sortMethod === "highToLow") return b.display_price - a.display_price;
+                if (sortMethod === "alphabetical") return a.display_name.localeCompare(b.display_name);
+                return 0;
+            });
     }, [allProducts, searchTerm, priceRange, selectedCatId, sortMethod]);
 
     const resetFilters = () => {
@@ -89,133 +100,162 @@ const Shop = () => {
     }
 
     return (
+        <>
+        <PageHeader title="Shop" />
         <div className="min-h-screen bg-gray-50 px-4 md:px-10 py-12 font-sans">
             <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-10">
-                <aside className="w-full lg:w-72 shrink-0 space-y-8">
-                    <div className="bg-white p-6 rounded-4xl shadow-sm border border-gray-100">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-sm font-black uppercase tracking-widest text-gray-900 flex items-center gap-2">
-                                <FaFilter className="text-amber-500" size={12} /> Filters
+                <aside className="w-full lg:w-72 shrink-0 space-y-6">
+                    <div className="bg-white p-6 rounded-4xl shadow-sm border border-gray-100 sticky top-24">
+                        <div className="flex justify-between items-center mb-8">
+                            <h3 className="font-black text-gray-900 flex items-center gap-2 uppercase tracking-widest text-xs">
+                                <FaFilter className="text-amber-500" /> Filters
                             </h3>
-                            <button onClick={resetFilters} className="text-amber-600 text-[10px] font-bold uppercase hover:underline flex items-center gap-1">
-                                <FaRedo size={8} /> Reset
+                            <button onClick={resetFilters} className="text-amber-600 text-[10px] font-black uppercase flex items-center gap-1 hover:opacity-70">
+                                <FaRedo /> Reset
                             </button>
                         </div>
 
-                        <div className="mb-8">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3">Search</label>
-                            <div className="relative">
+                        <div className="space-y-8">
+                            <div>
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4">Search</h4>
                                 <input
-                                    type="text" 
-                                    value={searchTerm} 
-                                    onChange={(e) => {
-                                        setSearchTerm(e.target.value);
-                                        navigate(e.target.value ? `/shop?search=${e.target.value}` : "/shop", { replace: true });
-                                    }}
-                                    placeholder="Search products..."
-                                    className="w-full bg-gray-50 border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-amber-500 outline-none"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full bg-gray-50 rounded-xl p-3 text-sm border-none focus:ring-2 focus:ring-amber-500 transition-all outline-none"
+                                    placeholder="Find your favorite..."
                                 />
-                                <FaSearch className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 size-3" />
                             </div>
-                        </div>
 
-                        <div className="mb-8">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-4">Categories</label>
-                            <ul className="space-y-3">
-                                <li
-                                    onClick={() => setSelectedCatId(null)}
-                                    className={`text-[12px] cursor-pointer uppercase font-bold tracking-tight transition-colors ${selectedCatId ? "text-gray-500 hover:text-amber-500" : "text-amber-600 font-black"}`}
-                                >
-                                    All Products
-                                </li>
-                                {categories.map(cat => (
-                                    <li
-                                        key={cat.id}
-                                        onClick={() => setSelectedCatId(cat.id)}
-                                        className={`text-[12px] cursor-pointer uppercase font-bold tracking-tight transition-colors ${selectedCatId === cat.id ? "text-amber-600 translate-x-1 font-black" : "text-gray-500 hover:text-amber-500"}`}
+                            <div>
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4">Collections</h4>
+                                <ul className="space-y-3">
+                                    <li 
+                                        onClick={() => setSelectedCatId(null)}
+                                        className={`cursor-pointer text-sm flex items-center justify-between group ${!selectedCatId ? 'text-amber-600 font-bold' : 'text-gray-500'}`}
                                     >
-                                        {cat.category_name || cat.cat_name}
+                                        All Products
+                                        <FaChevronRight className={`text-[8px] transition-transform ${!selectedCatId ? 'translate-x-0' : '-translate-x-2 opacity-0'}`} />
                                     </li>
-                                ))}
-                            </ul>
-                        </div>
+                                    {categories.map((cat) => (
+                                        <li 
+                                            key={cat.id} 
+                                            onClick={() => setSelectedCatId(cat.id)}
+                                            className={`cursor-pointer text-sm flex items-center justify-between group transition-all ${String(selectedCatId) === String(cat.id) ? 'text-amber-600 font-bold' : 'text-gray-500 hover:text-gray-800'}`}
+                                        >
+                                            {cat.category_name || cat.cat_name}
+                                            <FaChevronRight className={`text-[8px] transition-transform ${String(selectedCatId) === String(cat.id) ? 'translate-x-0' : '-translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0'}`} />
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
 
-                        <div>
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3">Max Price: ₹{priceRange}</label>
-                            <input
-                                type="range" min="50" max="2000" step="50"
-                                value={priceRange} onChange={(e) => setPriceRange(e.target.value)}
-                                className="w-full accent-amber-500 cursor-pointer"
-                            />
+                            <div>
+                                <div className="flex justify-between mb-4">
+                                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Price Range</h4>
+                                    <span className="text-xs font-bold text-amber-600">₹{priceRange}</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min="50"
+                                    max="2000"
+                                    value={priceRange}
+                                    onChange={(e) => setPriceRange(Number(e.target.value))}
+                                    className="w-full h-1 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                                />
+                            </div>
+
+                            <div>
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4">Sort By</h4>
+                                <select 
+                                    value={sortMethod}
+                                    onChange={(e) => setSortMethod(e.target.value)}
+                                    className="w-full bg-gray-50 rounded-xl p-3 text-sm outline-none cursor-pointer"
+                                >
+                                    <option value="default">Default Sorting</option>
+                                    <option value="lowToHigh">Price: Low to High</option>
+                                    <option value="highToLow">Price: High to Low</option>
+                                    <option value="alphabetical">Name: A to Z</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </aside>
 
                 <main className="flex-1">
-                    <header className="mb-10 flex flex-col sm:flex-row justify-between items-center border-b border-gray-100 pb-6 gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className="h-6 w-1.5 bg-amber-500 rounded-full"></div>
-                            <h2 className="text-2xl font-serif italic text-gray-800 uppercase tracking-widest">
-                                Collection <span className="text-gray-300 font-sans text-sm not-italic ml-2">({filteredProducts.length})</span>
-                            </h2>
-                        </div>
-
-                        <select
-                            value={sortMethod} onChange={(e) => setSortMethod(e.target.value)}
-                            className="bg-white border border-gray-100 rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-600 outline-none cursor-pointer focus:ring-1 focus:ring-amber-500 shadow-sm"
-                        >
-                            <option value="default">Sort: Default</option>
-                            <option value="lowToHigh">Price: Low to High</option>
-                            <option value="highToLow">Price: High to Low</option>
-                            <option value="alphabetical">Name: A-Z</option>
-                        </select>
-                    </header>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                         <AnimatePresence mode="popLayout">
-                            {filteredProducts.length > 0 ? (
-                                filteredProducts.map((product) => {
-                                    let images = product.product_images || product.product_image || product.images || [];
-                                    if (typeof images === "string") images = [images];
-                                    const imageUrl = images[0]?.startsWith("http") ? images[0] : images[0] ? BASE_URL + images[0] : "https://via.placeholder.com/400";
+                            {filteredProducts.map((product) => {
+                                let images = product.product_images || product.product_image || product.images || [];
+                                if (typeof images === "string") images = [images];
+                                const imageUrl = images[0]?.startsWith("http") ? images[0] : images[0] ? BASE_URL + images[0] : "https://via.placeholder.com/400";
 
-                                    return (
-                                        <motion.div
-                                            layout
-                                            initial={{ opacity: 0, scale: 0.9 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.9 }}
-                                            key={product.id}
-                                            className="group bg-white rounded-[2.5rem] p-4 shadow-sm hover:shadow-xl transition-all duration-500 border border-gray-50 cursor-pointer"
-                                            onClick={() => navigate(`/product/${product.id}`)}
-                                        >
-                                            <div className="relative aspect-square overflow-hidden rounded-4xl bg-amber-50/20 mb-5">
-                                                <img src={imageUrl} alt={product.display_name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                                                <div className="absolute inset-0 flex items-center justify-center gap-3 bg-amber-900/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                                                    <button onClick={(e) => { e.stopPropagation(); navigate(`/product/${product.id}`); }} className="rounded-full bg-white p-3 text-gray-700 shadow-lg hover:bg-amber-500 hover:text-white transition-all"><FaEye size={14} /></button>
-                                                    <button onClick={(e) => { e.stopPropagation(); dispatch(addFav(product)); }} className="rounded-full bg-white p-3 text-gray-700 shadow-lg hover:bg-red-500 hover:text-white transition-all"><FaHeart size={14} /></button>
-                                                    <button onClick={(e) => { e.stopPropagation(); dispatch(addToCart(product)); }} className="rounded-full bg-white p-3 text-gray-700 shadow-lg hover:bg-emerald-500 hover:text-white transition-all"><FaShoppingCart size={14} /></button>
+                                return (
+                                    <motion.div
+                                        key={product.id}
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.9 }}
+                                        transition={{ duration: 0.3 }}
+                                    >
+                                        <div className="flex flex-col group p-3 bg-white border border-gray-100 shadow-sm hover:shadow-xl rounded-[2rem] transition-all duration-500 relative">
+                                            <Link to={`/product/${product.category_id}/${product.id}`}>
+                                                <div className="relative overflow-hidden mb-4 rounded-[1.5rem] bg-gray-50 aspect-square flex items-center justify-center">
+                                                    <img
+                                                        src={imageUrl}
+                                                        className="w-full h-full object-contain p-4 group-hover:scale-110 transition duration-700"
+                                                        alt={product.display_name}
+                                                    />
                                                 </div>
+                                            </Link>
+
+                                            <div className="absolute top-6 right-6 flex flex-col gap-2 translate-x-12 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 z-10">
+                                                <button
+                                                    onClick={(e) => { e.preventDefault(); navigate(`/product/${product.category_id}/${product.id}`); }}
+                                                    className="bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-lg text-gray-800 hover:bg-amber-500 hover:text-white transition-all"
+                                                >
+                                                    <FaEye size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.preventDefault(); dispatch(addFav(product)); }}
+                                                    className="bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-lg text-gray-800 hover:bg-red-500 hover:text-white transition-all"
+                                                >
+                                                    <FaHeart size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.preventDefault(); dispatch(addToCart(product)); }}
+                                                    className="bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-lg text-gray-800 hover:bg-gray-900 hover:text-white transition-all"
+                                                >
+                                                    <FaShoppingCart size={14} />
+                                                </button>
                                             </div>
 
-                                            <div className="px-2">
-                                                <h4 className="text-[13px] font-bold uppercase tracking-tight text-gray-800 line-clamp-1 group-hover:text-amber-600 transition-colors mb-1">{product.display_name}</h4>
-                                                <div className="flex items-center justify-between">
-                                                    <p className="text-lg font-black text-amber-600">₹{product.display_price}</p>
-                                                    <span className="text-[9px] font-black uppercase text-gray-300 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">Details +</span>
-                                                </div>
+                                            <div className="px-2 pb-2">
+                                                <h3 className="text-xs font-bold text-gray-800 truncate mb-1">
+                                                    {product.display_name}
+                                                </h3>
+                                                <p className="text-amber-600 font-black text-sm">
+                                                    ₹{product.display_price}
+                                                </p>
                                             </div>
-                                        </motion.div>
-                                    );
-                                })
-                            ) : (
-                                <div className="col-span-full py-20 text-center text-gray-400 font-bold uppercase tracking-widest">No products found</div>
-                            )}
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
                         </AnimatePresence>
+
+                        {filteredProducts.length === 0 && (
+                            <div className="col-span-full text-center py-32">
+                                <div className="text-gray-300 mb-4 flex justify-center"><FaFilter size={40} /></div>
+                                <h3 className="text-gray-400 font-black uppercase tracking-widest text-xs">No products found</h3>
+                                <button onClick={resetFilters} className="mt-4 text-amber-600 text-[10px] font-black uppercase underline decoration-2 underline-offset-4">Clear all filters</button>
+                            </div>
+                        )}
                     </div>
                 </main>
             </div>
         </div>
+        </>
     );
 };
 

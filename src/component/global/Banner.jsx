@@ -52,7 +52,7 @@ export default function Banner() {
     return (
         <div className="relative w-full">
 
-            <div className="relative h-56 md:h-[500px] overflow-hidden">
+            <div className="relative h-56 md:h-125 overflow-hidden">
 
                 {data.map((item, index) => (
                     <img
