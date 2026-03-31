@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { FaFacebookF, FaInstagram, FaWhatsapp, FaTwitter, FaPhoneAlt, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa";
+import logo from '../../assets/images/web-logo-3.webp'
 
 export default function Footer() {
     const shopLinks = [
@@ -31,12 +32,12 @@ export default function Footer() {
                     <div className="mb-4 md:mb-0 font-bold text-gray-700 uppercase tracking-tighter">
                         <span>Connect with us for sweet updates</span>
                     </div>
-                    
+
                     <div className="flex items-center space-x-5">
                         {socialLinks.map(({ Icon, label, url }, idx) => (
-                            <a 
-                                key={idx} 
-                                href={url} 
+                            <a
+                                key={idx}
+                                href={url}
                                 aria-label={label}
                                 className="text-gray-400 hover:text-amber-600 transform hover:scale-110 transition-all duration-300"
                             >
@@ -49,17 +50,17 @@ export default function Footer() {
 
             <div className="mx-auto max-w-7xl px-6 py-12">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
-                    
+
                     <div className="flex flex-col items-center md:items-start text-center md:text-left">
                         <NavLink to="/" className="mb-6 block group">
-                            <img 
-                                src="/src/assets/images/web-logo-3.png" 
-                                alt="Maganlal Chikki Logo" 
-                                className="h-24 group-hover:brightness-110 transition-all" 
+                            <img
+                                src={logo}
+                                alt="Maganlal Chikki Logo"
+                                className="h-24 group-hover:brightness-110 transition-all"
                             />
                         </NavLink>
                         <p className="text-gray-500 text-sm leading-relaxed max-w-xs font-medium">
-                            Crafting the finest Lonavala Chikki since 1920. Pure ingredients, 
+                            Crafting the finest Lonavala Chikki since 1920. Pure ingredients,
                             traditional recipes, and a taste that brings back memories.
                         </p>
                     </div>
@@ -106,7 +107,7 @@ export default function Footer() {
                                     <FaMapMarkerAlt />
                                 </span>
                                 <p className="leading-snug">
-                                    Maganlal Chikki Products Pvt Ltd<br/>
+                                    Maganlal Chikki Products Pvt Ltd<br />
                                     <span className="text-gray-400 text-xs font-normal">Shed No. 49A & B, Lonavala 410401 Dist. Pune</span>
                                 </p>
                             </div>

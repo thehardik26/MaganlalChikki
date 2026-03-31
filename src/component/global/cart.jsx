@@ -97,8 +97,6 @@ export default function Cart() {
                                         </h2>
                                         <p className="text-amber-600 font-black text-sm md:text-lg">₹{item.display_price || item.product_price || item.price}</p>
                                     </div>
-
-                                    {/* Quantity Controls: Stacked on very small screens, row on medium */}
                                     <div className="flex items-center gap-2 md:gap-4 bg-gray-50 px-2 md:px-4 py-1 md:py-2 rounded-full">
                                         <button onClick={() => dispatch(decreaseQty(item.id))} className="px-1 md:px-0 font-bold text-gray-400 hover:text-red-500">-</button>
                                         <span className="font-black text-xs md:text-sm">{item.quantity}</span>
@@ -113,7 +111,7 @@ export default function Cart() {
                         })}
                     </div>
                     <div className="lg:col-span-1">
-                        <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 shadow-xl border border-gray-100 sticky top-6">
+                        <div className="bg-white rounded-4xl md:rounded-[3rem] p-6 md:p-10 shadow-xl border border-gray-100 sticky top-6">
                             <h2 className="text-[10px] font-black uppercase text-gray-400 mb-4 md:mb-6 tracking-widest">Payment Method</h2>
                             
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 mb-8">

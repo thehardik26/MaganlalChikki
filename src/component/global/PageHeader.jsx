@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
+import chikkiImage from '../../assets/images/CHikki.webp'
 
 export default function PageHeader({ title }) {
     return (
         <div
             className="relative h-48 sm:h-60 flex items-center justify-center text-white overflow-hidden"
             style={{
-                backgroundImage: "url('/src/assets/images/CHikki.png')",
+                backgroundImage: `url(${chikkiImage})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center"
             }}

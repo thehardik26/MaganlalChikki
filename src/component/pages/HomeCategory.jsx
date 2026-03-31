@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaEye, FaHeart, FaShoppingCart } from "react-icons/fa";
 import { useDispatch } from "react-redux";
-import { useNavigate, NavLink } from "react-router-dom"; // Added NavLink here
+import { useNavigate, NavLink } from "react-router-dom";
 import getProducts, { getCategory } from "../utils/getProducts";
 import { addToCart } from "../redux/Store/slice/cartslice";
 import { addFav } from "../redux/Store/slice/favslice";
@@ -57,7 +57,7 @@ const AllProducts = ({ data }) => {
                 name={data?.cat_name}
                 banner={data?.cat_image}
                 products={products || []}
-                catId={data?.id} // Passing catId for routing
+                catId={data?.id}
             />
         </div>
     );
