@@ -1,12 +1,17 @@
 import PageHeader from "../global/PageHeader";
 import getAbout from "../utils/getAbout";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 const AboutUs = () => {
     const { isFetching, data } = useQuery({
         queryKey: ["about"],
         queryFn: getAbout,
     });
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     if (isFetching) {
         return (
