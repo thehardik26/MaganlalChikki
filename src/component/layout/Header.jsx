@@ -3,6 +3,7 @@ import { useNavigate, NavLink, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon, MagnifyingGlassIcon, HeartIcon, ShoppingBagIcon } from "@heroicons/react/24/outline";
+import { SparklesIcon } from "@heroicons/react/24/solid";
 import maganlalLogo from "../../assets/images/web-logo-3.webp";
 
 const navigation = [
@@ -27,6 +28,10 @@ export default function Header() {
         if (searchQuery.trim()) {
             navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
         }
+    };
+
+    const handleOpenChat = () => {
+        window.dispatchEvent(new CustomEvent("open-maganlal-chat"));
     };
 
     return (
@@ -56,6 +61,16 @@ export default function Header() {
                                 {item.name}
                             </NavLink>
                         ))}
+
+                        <button
+                            type="button"
+                            onClick={handleOpenChat}
+                            className="ml-2 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white shadow-xs hover:shadow transition-all duration-200 cursor-pointer"
+                            title="Chat with Maganlal AI Advisor"
+                        >
+                            <SparklesIcon className="w-3.5 h-3.5 text-amber-200 animate-pulse" />
+                            <span>Ask AI</span>
+                        </button>
                     </div>
 
                     <div className="flex items-center justify-end gap-1 sm:gap-4">
@@ -73,6 +88,15 @@ export default function Header() {
                         </form>
 
                         <div className="flex items-center">
+                            <button
+                                type="button"
+                                onClick={handleOpenChat}
+                                className="lg:hidden flex items-center p-1.5 text-amber-600 hover:text-amber-700"
+                                title="Ask AI"
+                            >
+                                <SparklesIcon className="h-5 w-5" />
+                            </button>
+
                             <NavLink to="/fav" className="relative p-1.5 sm:p-2 text-gray-500 hover:text-amber-600 transition-colors">
                                 <HeartIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                                 {favItems?.length > 0 && (
@@ -138,7 +162,16 @@ export default function Header() {
                         {item.name}
                     </NavLink>
                 ))}
+
+                <button
+                    type="button"
+                    onClick={handleOpenChat}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white shadow-sm mt-2"
+                >
+                    <SparklesIcon className="w-4 h-4 text-amber-200" />
+                    <span>Ask AI Sweet Advisor</span>
+                </button>
             </DisclosurePanel>
         </Disclosure>
     );
-}
+}

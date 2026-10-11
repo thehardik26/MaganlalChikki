@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom"
 import Header from "./Header"
 import Footer from "./Footer"
+import ChatBotWidget from "../chat/ChatBotWidget"
 
 const Layout = ()=>{
     return(
@@ -11,9 +12,10 @@ const Layout = ()=>{
                 <Outlet/>
             </main>
         <Footer/>
+        <ChatBotWidget/>
         </div>
         </>
     )
 }
 
-export default Layout;
+export default Layout;
